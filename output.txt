@@ -1,0 +1,555 @@
+[root@localhost ohai]# chef-solo -c /root/.chef/solo.rb
+[2015-09-21T14:55:13+00:00] INFO: Forking chef instance to converge...
+Starting Chef Client, version 12.4.1
+[2015-09-21T14:55:13+00:00] INFO: *** Chef 12.4.1 ***
+[2015-09-21T14:55:13+00:00] INFO: Chef-client pid: 18812
+[2015-09-21T14:55:15+00:00] INFO: Setting the run_list to ["recipe[nginx::default]", "recipe[iptables::default]"] from CLI o
+ptions
+[2015-09-21T14:55:15+00:00] INFO: Run List is [recipe[nginx::default], recipe[iptables::default]]
+[2015-09-21T14:55:15+00:00] INFO: Run List expands to [nginx::default, iptables::default]
+[2015-09-21T14:55:15+00:00] INFO: Starting Chef Run for localhost
+[2015-09-21T14:55:15+00:00] INFO: Running start handlers
+[2015-09-21T14:55:15+00:00] INFO: Start handlers complete.
+Compiling Cookbooks...
+[2015-09-21T14:55:15+00:00] INFO: ohai plugins will be at: /etc/chef/ohai_plugins
+Recipe: ohai::default
+  * remote_directory[/etc/chef/ohai_plugins for cookbook ohai] action create[2015-09-21T14:55:15+00:00] INFO: Processing rem
+ote_directory[/etc/chef/ohai_plugins for cookbook ohai] action create (ohai::default line 33)
+
+  Recipe: <Dynamically Defined Resource>
+    * cookbook_file[/etc/chef/ohai_plugins/README] action create[2015-09-21T14:55:15+00:00] INFO: Processing cookbook_file[/
+etc/chef/ohai_plugins/README] action create (dynamically defined)
+ (up to date)
+     (up to date)
+Recipe: ohai::default
+  * ohai[custom_plugins] action reload[2015-09-21T14:55:15+00:00] INFO: Processing ohai[custom_plugins] action reload (ohai:
+:default line 47)
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: already initializ
+ed constant ETHERNET_ENCAPS
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: previous definiti
+on of ETHERNET_ENCAPS was here
+[2015-09-21T14:55:17+00:00] INFO: ohai[custom_plugins] reloaded
+
+    - re-run ohai and merge results into node attributes
+[2015-09-21T14:55:17+00:00] WARN: Cloning resource attributes for service[nginx] from prior resource (CHEF-3694)
+[2015-09-21T14:55:17+00:00] WARN: Previous service[nginx]: /root/chef_cookbooks/nginx/recipes/package.rb:47:in `from_file'
+[2015-09-21T14:55:17+00:00] WARN: Current  service[nginx]: /root/chef_cookbooks/nginx/recipes/default.rb:24:in `from_file'
+  Converging 23 resources
+Recipe: nginx::ohai_plugin
+  * ohai[reload_nginx] action nothing[2015-09-21T14:55:17+00:00] INFO: Processing ohai[reload_nginx] action nothing (nginx::
+ohai_plugin line 22)
+ (skipped due to action :nothing)
+  * template[/etc/chef/ohai_plugins/nginx.rb] action create[2015-09-21T14:55:17+00:00] INFO: Processing template[/etc/chef/o
+hai_plugins/nginx.rb] action create (nginx::ohai_plugin line 27)
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx.rb] created file /etc/chef/ohai_plugins/nginx.rb
+
+    - create new file /etc/chef/ohai_plugins/nginx.rb[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx
+.rb] updated file contents /etc/chef/ohai_plugins/nginx.rb
+
+    - update content in file /etc/chef/ohai_plugins/nginx.rb from none to 9f7e82
+    --- /etc/chef/ohai_plugins/nginx.rb 2015-09-21 14:55:18.037280209 +0000
+    +++ /tmp/chef-rendered-template20150921-18812-bt5277        2015-09-21 14:55:18.037280209 +0000
+    @@ -1 +1,67 @@
+    +#
+    +# Author:: Jamie Winsor (<jamie@vialstudios.com>)
+    +#
+    +# Copyright 2012, Riot Games
+    +#
+    +# Licensed under the Apache License, Version 2.0 (the "License");
+    +# you may not use this file except in compliance with the License.
+    +# You may obtain a copy of the License at
+    +#
+    +#     http://www.apache.org/licenses/LICENSE-2.0
+    +#
+    +# Unless required by applicable law or agreed to in writing, software
+    +# distributed under the License is distributed on an "AS IS" BASIS,
+    +# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    +# See the License for the specific language governing permissions and
+    +# limitations under the License.
+    +#
+    +
+    +provides "nginx"
+    +provides "nginx/version"
+    +provides "nginx/configure_arguments"
+    +provides "nginx/prefix"
+    +provides "nginx/conf_path"
+    +
+    +def parse_flags(flags)
+    +  prefix = nil
+    +  conf_path = nil
+    +
+    +  flags.each do |flag|
+    +    case flag
+    +    when /^--prefix=(.+)$/
+    +      prefix = $1
+    +    when /^--conf-path=(.+)$/
+    +      conf_path = $1
+    +    end
+    +  end
+    +
+    +  [ prefix, conf_path ]
+    +end
+    +
+    +nginx Mash.new unless nginx
+    +nginx[:version]             = nil unless nginx[:version]
+    +nginx[:configure_arguments] = Array.new unless nginx[:configure_arguments]
+    +nginx[:prefix]              = nil unless nginx[:prefix]
+    +nginx[:conf_path]           = nil unless nginx[:conf_path]
+    +
+    +status, stdout, stderr = run_command(:no_status_check => true, :command => "/usr/sbin/nginx -V")
+    +
+    +if status == 0
+    +  stderr.split("\n").each do |line|
+    +    case line
+    +    when /^configure arguments:(.+)/
+    +      # This could be better: I'm splitting on configure arguments which removes them and also
+    +      # adds a blank string at index 0 of the array. This is why we drop index 0 and map to
+    +      # add the '--' prefix back to the configure argument.
+    +      nginx[:configure_arguments] = $1.split(/\s--/).drop(1).map { |ca| "--#{ca}" }
+    +
+    +      prefix, conf_path = parse_flags(nginx[:configure_arguments])
+    +
+    +      nginx[:prefix] = prefix
+    +      nginx[:conf_path] = conf_path
+    +    when /^nginx version: nginx\/(\d+\.\d+\.\d+)/
+    +      nginx[:version] = $1
+    +    end
+    +  end
+    +end[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx.rb] owner changed to 0
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx.rb] group changed to 0
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx.rb] mode changed to 755
+
+    - change mode from '' to '0755'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/chef/ohai_plugins/nginx.rb] sending reload action to ohai[reload_nginx] (imm
+ediate)
+  * ohai[reload_nginx] action reload[2015-09-21T14:55:18+00:00] INFO: Processing ohai[reload_nginx] action reload (nginx::oh
+ai_plugin line 22)
+[2015-09-21T14:55:18+00:00] WARN: [DEPRECATION] Plugin at /etc/chef/ohai_plugins/nginx.rb is a version 6 plugin. Version 6 p
+lugins will not be supported in future releases of Ohai. Please upgrade your plugin to version 7 plugin syntax. For more inf
+ormation visit here: docs.chef.io/ohai_custom.html
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: already initializ
+ed constant ETHERNET_ENCAPS
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: previous definiti
+on of ETHERNET_ENCAPS was here
+[2015-09-21T14:55:18+00:00] INFO: ohai[reload_nginx] reloaded
+
+    - re-run ohai and merge results into node attributes
+Recipe: ohai::default
+  * remote_directory[/etc/chef/ohai_plugins for cookbook ohai] action nothing[2015-09-21T14:55:18+00:00] INFO: Processing re
+mote_directory[/etc/chef/ohai_plugins for cookbook ohai] action nothing (ohai::default line 33)
+ (skipped due to action :nothing)
+  * ohai[custom_plugins] action nothing[2015-09-21T14:55:18+00:00] INFO: Processing ohai[custom_plugins] action nothing (oha
+i::default line 47)
+ (skipped due to action :nothing)
+Recipe: yum-epel::default
+  * yum_repository[epel] action create[2015-09-21T14:55:18+00:00] INFO: Processing yum_repository[epel] action create (yum-e
+pel::default line 22)
+
+    * template[/etc/yum.repos.d/epel.repo] action create[2015-09-21T14:55:18+00:00] INFO: Processing template[/etc/yum.repos
+.d/epel.repo] action create (/root/chef_cookbooks/yum/providers/repository.rb line 39)
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/yum.repos.d/epel.repo] backed up to /var/chef/backup/etc/yum.repos.d/epel.re
+po.chef-20150921145518.261840
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/yum.repos.d/epel.repo] updated file contents /etc/yum.repos.d/epel.repo
+
+      - update content in file /etc/yum.repos.d/epel.repo from cd4915 to d02c1f
+      --- /etc/yum.repos.d/epel.repo    2012-11-05 03:52:17.000000000 +0000
+      +++ /tmp/chef-rendered-template20150921-18812-oemxs2      2015-09-21 14:55:18.258169707 +0000
+      @@ -1,27 +1,11 @@
+      +# This file was generated by Chef
+      +# Do NOT modify this file by hand.
+      +
+       [epel]
+       name=Extra Packages for Enterprise Linux 6 - $basearch
+      -#baseurl=http://download.fedoraproject.org/pub/epel/6/$basearch
+      -mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-6&arch=$basearch
+      -failovermethod=priority
+       enabled=1
+      -gpgcheck=1
+      -gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+      -
+      -[epel-debuginfo]
+      -name=Extra Packages for Enterprise Linux 6 - $basearch - Debug
+      -#baseurl=http://download.fedoraproject.org/pub/epel/6/$basearch/debug
+      -mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-debug-6&arch=$basearch
+       failovermethod=priority
+      -enabled=0
+      -gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+       gpgcheck=1
+      -
+      -[epel-source]
+      -name=Extra Packages for Enterprise Linux 6 - $basearch - Source
+      -#baseurl=http://download.fedoraproject.org/pub/epel/6/SRPMS
+      -mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-source-6&arch=$basearch
+      -failovermethod=priority
+      -enabled=0
+      -gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+      -gpgcheck=1
+      +gpgkey=https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
+      +mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-6&arch=$basearch
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/yum.repos.d/epel.repo] sending run action to execute[yum clean epel] (immedi
+ate)
+    * execute[yum clean epel] action run[2015-09-21T14:55:18+00:00] INFO: Processing execute[yum clean epel] action run (/ro
+ot/chef_cookbooks/yum/providers/repository.rb line 55)
+Loaded plugins: presto, security
+Cleaning repos: epel
+Cleaning up Everything
+0 delta-package files removed, by presto
+[2015-09-21T14:55:18+00:00] INFO: execute[yum clean epel] ran successfully
+
+      - execute yum clean all --disablerepo=* --enablerepo=epel
+[2015-09-21T14:55:18+00:00] INFO: template[/etc/yum.repos.d/epel.repo] sending run action to execute[yum-makecache-epel] (im
+mediate)
+    * execute[yum-makecache-epel] action run[2015-09-21T14:55:18+00:00] INFO: Processing execute[yum-makecache-epel] action
+run (/root/chef_cookbooks/yum/providers/repository.rb line 61)
+[2015-09-21T14:56:50+00:00] INFO: execute[yum-makecache-epel] ran successfully
+
+      - execute yum -q -y makecache --disablerepo=* --enablerepo=epel
+[2015-09-21T14:56:50+00:00] INFO: template[/etc/yum.repos.d/epel.repo] sending create action to ruby_block[yum-cache-reload-
+epel] (immediate)
+    * ruby_block[yum-cache-reload-epel] action create[2015-09-21T14:56:50+00:00] INFO: Processing ruby_block[yum-cache-reloa
+d-epel] action create (/root/chef_cookbooks/yum/providers/repository.rb line 68)
+[2015-09-21T14:56:50+00:00] INFO: ruby_block[yum-cache-reload-epel] called
+
+      - execute the ruby block yum-cache-reload-epel
+    * execute[yum clean epel] action nothing[2015-09-21T14:56:50+00:00] INFO: Processing execute[yum clean epel] action noth
+ing (/root/chef_cookbooks/yum/providers/repository.rb line 55)
+ (skipped due to action :nothing)
+    * execute[yum-makecache-epel] action nothing[2015-09-21T14:56:50+00:00] INFO: Processing execute[yum-makecache-epel] act
+ion nothing (/root/chef_cookbooks/yum/providers/repository.rb line 61)
+ (skipped due to action :nothing)
+    * ruby_block[yum-cache-reload-epel] action nothing[2015-09-21T14:56:50+00:00] INFO: Processing ruby_block[yum-cache-relo
+ad-epel] action nothing (/root/chef_cookbooks/yum/providers/repository.rb line 68)
+ (skipped due to action :nothing)
+
+Recipe: nginx::package
+  * yum_package[nginx] action install[2015-09-21T14:56:50+00:00] INFO: Processing yum_package[nginx] action install (nginx::
+package line 41)
+[2015-09-21T14:56:54+00:00] INFO: yum_package[nginx] installing nginx-1.0.15-12.el6 from epel repository
+[2015-09-21T14:58:46+00:00] INFO: yum_package[nginx] installed nginx at 1.0.15-12.el6
+
+    - install version 1.0.15-12.el6 of package nginx
+[2015-09-21T14:58:46+00:00] INFO: yum_package[nginx] sending reload action to ohai[reload_nginx] (immediate)
+Recipe: nginx::ohai_plugin
+  * ohai[reload_nginx] action reload[2015-09-21T14:58:46+00:00] INFO: Processing ohai[reload_nginx] action reload (nginx::oh
+ai_plugin line 22)
+[2015-09-21T14:58:46+00:00] WARN: [DEPRECATION] Plugin at /etc/chef/ohai_plugins/nginx.rb is a version 6 plugin. Version 6 p
+lugins will not be supported in future releases of Ohai. Please upgrade your plugin to version 7 plugin syntax. For more inf
+ormation visit here: docs.chef.io/ohai_custom.html
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: already initializ
+ed constant ETHERNET_ENCAPS
+/opt/chefdk/embedded/lib/ruby/gems/2.1.0/gems/ohai-8.5.1/lib/ohai/plugins/solaris2/network.rb:57: warning: previous definiti
+on of ETHERNET_ENCAPS was here
+[2015-09-21T14:58:46+00:00] INFO: ohai[reload_nginx] reloaded
+
+    - re-run ohai and merge results into node attributes
+Recipe: nginx::package
+  * service[nginx] action enable[2015-09-21T14:58:46+00:00] INFO: Processing service[nginx] action enable (nginx::package li
+ne 47)
+[2015-09-21T14:58:46+00:00] INFO: service[nginx] enabled
+
+    - enable service service[nginx]
+Recipe: nginx::commons_dir
+  * directory[/etc/nginx] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/etc/nginx] action create (ngi
+nx::commons_dir line 22)
+ (up to date)
+  * directory[/var/log/nginx] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/var/log/nginx] action cre
+ate (nginx::commons_dir line 29)
+[2015-09-21T14:58:46+00:00] INFO: directory[/var/log/nginx] mode changed to 750
+
+    - change mode from '0700' to '0750'
+  * directory[/var/run] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/var/run] action create (nginx::
+commons_dir line 36)
+ (up to date)
+  * directory[/etc/nginx/sites-available] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/etc/nginx/sit
+es-available] action create (nginx::commons_dir line 44)
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-available] created directory /etc/nginx/sites-available
+
+    - create new directory /etc/nginx/sites-available[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-available]
+ owner changed to 0
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-available] group changed to 0
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-available] mode changed to 755
+
+    - change mode from '' to '0755'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+  * directory[/etc/nginx/sites-enabled] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/etc/nginx/sites
+-enabled] action create (nginx::commons_dir line 44)
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-enabled] created directory /etc/nginx/sites-enabled
+
+    - create new directory /etc/nginx/sites-enabled[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-enabled] own
+er changed to 0
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-enabled] group changed to 0
+[2015-09-21T14:58:46+00:00] INFO: directory[/etc/nginx/sites-enabled] mode changed to 755
+
+    - change mode from '' to '0755'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+  * directory[/etc/nginx/conf.d] action create[2015-09-21T14:58:46+00:00] INFO: Processing directory[/etc/nginx/conf.d] acti
+on create (nginx::commons_dir line 44)
+ (up to date)
+Recipe: nginx::commons_script
+  * template[/usr/sbin/nxensite] action create[2015-09-21T14:58:46+00:00] INFO: Processing template[/usr/sbin/nxensite] acti
+on create (nginx::commons_script line 23)
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxensite] created file /usr/sbin/nxensite
+
+    - create new file /usr/sbin/nxensite[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxensite] updated file contents
+ /usr/sbin/nxensite
+
+    - update content in file /usr/sbin/nxensite from none to fa46fb
+    --- /usr/sbin/nxensite      2015-09-21 14:58:46.963764684 +0000
+    +++ /tmp/chef-rendered-template20150921-18812-1fwthpr       2015-09-21 14:58:46.963764684 +0000
+    @@ -1 +1,39 @@
+    +#!/bin/sh -e
+    +
+    +SYSCONFDIR='/etc/nginx'
+    +
+    +if [ -z $1 ]; then
+    +        echo "Which site would you like to enable?"
+    +        echo -n "Your choices are: "
+    +        ls $SYSCONFDIR/sites-available/* | \
+    +        sed -e "s,$SYSCONFDIR/sites-available/,,g" | xargs echo
+    +        echo -n "Site name? "
+    +        read SITENAME
+    +else
+    +        SITENAME=$1
+    +fi
+    +
+    +if [ $SITENAME = "default" ]; then
+    +        PRIORITY="000"
+    +fi
+    +
+    +if [ -e $SYSCONFDIR/sites-enabled/$SITENAME -o \
+    +     -e $SYSCONFDIR/sites-enabled/"$PRIORITY"-"$SITENAME" ]; then
+    +        echo "This site is already enabled!"
+    +        exit 0
+    +fi
+    +
+    +if ! [ -e $SYSCONFDIR/sites-available/$SITENAME ]; then
+    +        echo "This site does not exist!"
+    +        exit 1
+    +fi
+    +
+    +if [ $SITENAME = "default" ]; then
+    +        ln -sf $SYSCONFDIR/sites-available/$SITENAME \
+    +               $SYSCONFDIR/sites-enabled/"$PRIORITY"-"$SITENAME"
+    +else
+    +        ln -sf $SYSCONFDIR/sites-available/$SITENAME $SYSCONFDIR/sites-enabled/$SITENAME
+    +fi
+    +
+    +echo "Site $SITENAME installed; reload nginx to enable."[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxensite]
+owner changed to 0
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxensite] group changed to 0
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxensite] mode changed to 755
+
+    - change mode from '' to '0755'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+  * template[/usr/sbin/nxdissite] action create[2015-09-21T14:58:46+00:00] INFO: Processing template[/usr/sbin/nxdissite] ac
+tion create (nginx::commons_script line 23)
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxdissite] created file /usr/sbin/nxdissite
+
+    - create new file /usr/sbin/nxdissite[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxdissite] updated file conten
+ts /usr/sbin/nxdissite
+
+    - update content in file /usr/sbin/nxdissite from none to cc16ec
+    --- /usr/sbin/nxdissite     2015-09-21 14:58:46.975758684 +0000
+    +++ /tmp/chef-rendered-template20150921-18812-1j9lzjp       2015-09-21 14:58:46.975758684 +0000
+    @@ -1 +1,30 @@
+    +#!/bin/sh -e
+    +
+    +SYSCONFDIR='/etc/nginx'
+    +
+    +if [ -z $1 ]; then
+    +        echo "Which site would you like to disable?"
+    +        echo -n "Your choices are: "
+    +        ls $SYSCONFDIR/sites-enabled/* | \
+    +        sed -e "s,$SYSCONFDIR/sites-enabled/,,g" | xargs echo
+    +        echo -n "Site name? "
+    +        read SITENAME
+    +else
+    +        SITENAME=$1
+    +fi
+    +
+    +if [ $SITENAME = "default" ]; then
+    +        PRIORITY="000"
+    +fi
+    +
+    +if ! [ -e $SYSCONFDIR/sites-enabled/$SITENAME -o \
+    +       -e $SYSCONFDIR/sites-enabled/"$PRIORITY"-"$SITENAME" ]; then
+    +        echo "This site is already disabled, or does not exist!"
+    +        exit 1
+    +fi
+    +
+    +if ! rm $SYSCONFDIR/sites-enabled/$SITENAME 2>/dev/null; then
+    +        rm -f $SYSCONFDIR/sites-enabled/"$PRIORITY"-"$SITENAME"
+    +fi
+    +echo "Site $SITENAME disabled; reload nginx to disable."[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxdissite]
+ owner changed to 0
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxdissite] group changed to 0
+[2015-09-21T14:58:46+00:00] INFO: template[/usr/sbin/nxdissite] mode changed to 755
+
+    - change mode from '' to '0755'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+Recipe: nginx::commons_conf
+  * template[nginx.conf] action create[2015-09-21T14:58:46+00:00] INFO: Processing template[nginx.conf] action create (nginx
+::commons_conf line 22)
+[2015-09-21T14:58:46+00:00] INFO: template[nginx.conf] backed up to /var/chef/backup/etc/nginx/nginx.conf.chef-2015092114584
+6.994761
+[2015-09-21T14:58:46+00:00] INFO: template[nginx.conf] updated file contents /etc/nginx/nginx.conf
+
+    - update content in file /etc/nginx/nginx.conf from d364aa to a580f6
+    --- /etc/nginx/nginx.conf   2015-06-16 21:34:15.000000000 +0000
+    +++ /tmp/chef-rendered-template20150921-18812-8jcbog        2015-09-21 14:58:46.989751684 +0000
+    @@ -1,43 +1,48 @@
+    -# For more information on configuration, see:
+    -#   * Official English Documentation: http://nginx.org/en/docs/
+    -#   * Official Russian Documentation: http://nginx.org/ru/docs/
+    +user nginx;
+    +worker_processes  4;
+
+    -user              nginx;
+    -worker_processes  1;
+    -
+     error_log  /var/log/nginx/error.log;
+    -#error_log  /var/log/nginx/error.log  notice;
+    -#error_log  /var/log/nginx/error.log  info;
+    -
+     pid        /var/run/nginx.pid;
+
+    -
+     events {
+    -    worker_connections  1024;
+    +  worker_connections  1024;
+     }
+
+    -
+     http {
+    -    include       /etc/nginx/mime.types;
+    -    default_type  application/octet-stream;
+
+    -    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    -                      '$status $body_bytes_sent "$http_referer" '
+    -                      '"$http_user_agent" "$http_x_forwarded_for"';
+    +  include       /etc/nginx/mime.types;
+    +  default_type  application/octet-stream;
+
+    -    access_log  /var/log/nginx/access.log  main;
+
+    -    sendfile        on;
+    -    #tcp_nopush     on;
+    +  access_log    /var/log/nginx/access.log;
+
+    -    #keepalive_timeout  0;
+    -    keepalive_timeout  65;
+    +  sendfile on;
+    +  tcp_nopush on;
+    +  tcp_nodelay on;
+
+    -    #gzip  on;
+    -
+    -    # Load config files from the /etc/nginx/conf.d directory
+    -    # The default server is in conf.d/default.conf
+    -    include /etc/nginx/conf.d/*.conf;
+    +  keepalive_requests 100;
+    +  keepalive_timeout  65;
+
+    +
+    +  gzip  on;
+    +  gzip_http_version 1.0;
+    +  gzip_comp_level 2;
+    +  gzip_proxied any;
+    +  gzip_vary off;
+    +  gzip_types text/plain text/css application/x-javascript text/xml application/xml application/rss+xml application/atom
++xml text/javascript application/javascript application/json text/mathml;
+    +  gzip_min_length  1000;
+    +  gzip_disable     "MSIE [1-6]\.";
+    +
+    +
+    +  variables_hash_max_size 1024;
+    +  variables_hash_bucket_size 64;
+    +  server_names_hash_bucket_size 64;
+    +  types_hash_max_size 2048;
+    +  types_hash_bucket_size 64;
+    +
+    +
+    +
+    +  include /etc/nginx/conf.d/*.conf;
+    +  include /etc/nginx/sites-enabled/*;
+     }
+  * template[/etc/nginx/sites-available/default] action create[2015-09-21T14:58:47+00:00] INFO: Processing template[/etc/ngi
+nx/sites-available/default] action create (nginx::commons_conf line 32)
+[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-available/default] created file /etc/nginx/sites-available/defau
+lt
+
+    - create new file /etc/nginx/sites-available/default[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-availabl
+e/default] updated file contents /etc/nginx/sites-available/default
+
+    - update content in file /etc/nginx/sites-available/default from none to 06c061
+    --- /etc/nginx/sites-available/default      2015-09-21 14:58:47.003744684 +0000
+    +++ /tmp/chef-rendered-template20150921-18812-1ufogls       2015-09-21 14:58:47.003744684 +0000
+    @@ -1 +1,12 @@
+    +server {
+    +  listen   80;
+    +  server_name  localhost;
+    +
+    +  access_log  /var/log/nginx/localhost.access.log;
+    +
+    +  location / {
+    +    root   /usr/share/nginx/html;
+    +    index  index.html index.htm;
+    +  }
+    +}[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-available/default] owner changed to 0
+[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-available/default] group changed to 0
+[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-available/default] mode changed to 644
+
+    - change mode from '' to '0644'
+    - change owner from '' to 'root'
+    - change group from '' to 'root'
+[2015-09-21T14:58:47+00:00] INFO: template[/etc/nginx/sites-available/default] not queuing delayed action reload on service[
+nginx] (delayed), as it's already been queued
+  * execute[nxensite default] action run[2015-09-21T14:58:47+00:00] INFO: Processing execute[nxensite default] action run (n
+ginx::commons_conf line 32)
+Site default installed; reload nginx to enable.
+[2015-09-21T14:58:47+00:00] INFO: execute[nxensite default] ran successfully
+
+    - execute /usr/sbin/nxensite default
+[2015-09-21T14:58:47+00:00] INFO: execute[nxensite default] not queuing delayed action reload on service[nginx] (delayed), a
+s it's already been queued
+Recipe: nginx::default
+  * service[nginx] action start[2015-09-21T14:58:47+00:00] INFO: Processing service[nginx] action start (nginx::default line
+ 24)
+[2015-09-21T14:58:47+00:00] INFO: service[nginx] started
+
+    - start service service[nginx]
+Recipe: iptables::default
+  * yum_package[iptables] action install[2015-09-21T14:58:47+00:00] INFO: Processing yum_package[iptables] action install (i
+ptables::default line 23)
+ (up to date)
+  * execute[rebuild-iptables] action nothing[2015-09-21T14:58:47+00:00] INFO: Processing execute[rebuild-iptables] action no
+thing (iptables::default line 26)
+ (skipped due to action :nothing)
+  * directory[/etc/iptables.d] action create[2015-09-21T14:58:47+00:00] INFO: Processing directory[/etc/iptables.d] action c
+reate (iptables::default line 31)
+ (up to date)
+  * template[/usr/sbin/rebuild-iptables] action create[2015-09-21T14:58:47+00:00] INFO: Processing template[/usr/sbin/rebuil
+d-iptables] action create (iptables::default line 35)
+ (up to date)
+[2015-09-21T14:58:47+00:00] INFO: template[nginx.conf] sending reload action to service[nginx] (delayed)
+Recipe: nginx::default
+  * service[nginx] action reload[2015-09-21T14:58:47+00:00] INFO: Processing service[nginx] action reload (nginx::default li
+ne 24)
+[2015-09-21T14:58:48+00:00] INFO: service[nginx] reloaded
+
+    - reload service service[nginx]
+[2015-09-21T14:58:48+00:00] INFO: Chef Run complete in 212.488298514 seconds
+[2015-09-21T14:58:48+00:00] INFO: Skipping removal of unused files from the cache
+
+Running handlers:
+[2015-09-21T14:58:48+00:00] INFO: Running report handlers
+Running handlers complete
+[2015-09-21T14:58:48+00:00] INFO: Report handlers complete
+Chef Client finished, 21/29 resources updated in 214.493564823 seconds
+[root@localhost ohai]#
